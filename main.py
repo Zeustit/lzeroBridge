@@ -40,11 +40,13 @@ if __name__ == '__main__':
     # Chain_id = web3.eth.chain_id
 
     # Call your function
-    address = Account.from_key(caller).address
+    address = web3.eth.account.from_key(caller).address
+    print(address)
     amountIn = web3.to_wei(Decimal('0.05'), 'ether')
     amountOutMin = web3.to_wei(Decimal('0.04'), 'ether')
     dstChainId = int('420', 16)
-    call_function = contract_instance.functions.swapAndBridge(amountIn, amountOutMin, dstChainId, address, address, address, 1).buildTransaction(
+    adapterParams = bytes('20000', 'utf-8')
+    call_function = contract_instance.functions.swapAndBridge(amountIn, amountOutMin, dstChainId, address, address, address, adapterParams).build_transaction(
         {"chainId": 5, "from": caller, "nonce": 1})
     #
     # Sign transaction
