@@ -1,8 +1,9 @@
 from web3 import Web3
 from eth_account import Account
 from decimal import Decimal
+import struct
+import ctypes
 
-address = ''
 RPC = [
     {'chain': 'Ethereum     ', 'chain_id': 1, 'rpc': 'https://rpc.ankr.com/eth'},
     {'chain': 'Goerli     ', 'chain_id': 5, 'rpc': 'https://goerli.blockpi.network/v1/rpc/public'},
@@ -31,31 +32,34 @@ if __name__ == '__main__':
     # max_amount = input()
 
     web3 = Web3(Web3.HTTPProvider('https://goerli.blockpi.network/v1/rpc/public'))
+    # web3 = Web3(Web3.HTTPProvider('https://optimism-goerli.public.blastapi.io'))
     contract_instance = web3.eth.contract(address=contract_address, abi=ABI)
     check_balance('0x87d620A1aED74357b59fE2d05c41Bfa895caEcc8', 1)
     check_balance('0x87d620A1aED74357b59fE2d05c41Bfa895caEcc8', 2)
     check_balance('0x87d620A1aED74357b59fE2d05c41Bfa895caEcc8', 3)
 
-    # # initialize the chain id, we need it to build the transaction for replay protection
+    # initialize the chain id, we need it to build the transaction for replay protection
     # Chain_id = web3.eth.chain_id
 
     # Call your function
-    # address = web3.eth.account.from_key(caller).address
-    address = '0x87d620A1aED74357b59fE2d05c41Bfa895caEcc8'
-    print(address)
-    amountIn = web3.to_wei(Decimal('0.05'), 'ether')
-    amountOutMin = web3.to_wei(Decimal('0.04'), 'ether')
-    dstChainId = int('420', 16)
+    address = web3.eth.account.from_key(caller).address
+    eth_account = web3.eth.account.from_key(caller)
+    # address = '0x87d620A1aED74357b59fE2d05c41Bfa895caEcc8'
+    checksum_address = web3.to_checksum_address(address)
+    print("gas:", web3.eth.gas_price)
+    amountIn = web3.to_wei(Decimal('0.1'), 'ether')
+    amountOutMin = web3.to_wei(Decimal('0.001'), 'ether')
+    dstChainId = ctypes.c_uint16(420).value
     adapterParams = bytes('20000', 'utf-8')
-    call_function = contract_instance.functions.swapAndBridge(amountIn, amountOutMin, dstChainId, address, address, address, adapterParams).build_transaction(
-        {"chainId": 5, "from": address, "nonce": 1})
-    #
+    call_function = contract_instance.functions.swapAndBridge(amountIn, amountOutMin, dstChainId, checksum_address, checksum_address, checksum_address, adapterParams).build_transaction(
+         {"chainId": 5, "from": checksum_address, "nonce": 5, "gasLimit":  web3.eth.gas_price, "value": web3.to_wei(Decimal('0.1'), 'ether'), "timeout": 600})
+
     # Sign transaction
     signed_tx = web3.eth.account.sign_transaction(call_function, private_key=caller)
-    #
-    # # Send transaction
-    # send_tx = web3.eth.send_raw_transaction(signed_tx.rawTransaction)
-    #
-    # # Wait for transaction receipt
-    # tx_receipt = web3.eth.wait_for_transaction_receipt(send_tx)
-    # # print(tx_receipt) # Optional
+
+    # Send transaction
+    send_tx = web3.eth.send_raw_transaction(signed_tx.rawTransaction)
+
+    # Wait for transaction receipt
+    tx_receipt = web3.eth.wait_for_transaction_receipt(send_tx)
+    print(tx_receipt) # Optional
