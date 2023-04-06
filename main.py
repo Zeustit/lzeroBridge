@@ -10,10 +10,12 @@ RPC = [
     {'chain': 'Optimism Goerli Testnet     ', 'chain_id': 420, 'rpc': 'https://optimism-goerli.public.blastapi.io'},
     {'chain': 'Arbitrum One ', 'chain_id': 421613, 'rpc': 'https://goerli-rollup.arbitrum.io/rpc'},
 ]
-ABI = '[{"inputs":[{"internalType":"address","name":"_weth","type":"address"},{"internalType":"address","name":"_oft","type":"address"},{"internalType":"address","name":"_swapRouter","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"inputs":[],"name":"oft","outputs":[{"internalType":"contract IOFTCore","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"poolFee","outputs":[{"internalType":"uint24","name":"","type":"uint24"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"amountIn","type":"uint256"},{"internalType":"uint256","name":"amountOutMin","type":"uint256"},{"internalType":"uint16","name":"dstChainId","type":"uint16"},{"internalType":"address","name":"to","type":"address"},{"internalType":"address payable","name":"refundAddress","type":"address"},{"internalType":"address","name":"zroPaymentAddress","type":"address"},{"internalType":"bytes","name":"adapterParams","type":"bytes"}],"name":"swapAndBridge","outputs":[],"stateMutability":"payable","type":"function"},{"inputs":[],"name":"swapRouter","outputs":[{"internalType":"contract ISwapRouter","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"weth","outputs":[{"internalType":"contract IWETH","name":"","type":"address"}],"stateMutability":"view","type":"function"}]'
+# ABI = '[{"inputs":[{"internalType":"address","name":"_weth","type":"address"},{"internalType":"address","name":"_oft","type":"address"},{"internalType":"address","name":"_swapRouter","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"inputs":[],"name":"oft","outputs":[{"internalType":"contract IOFTCore","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"poolFee","outputs":[{"internalType":"uint24","name":"","type":"uint24"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"amountIn","type":"uint256"},{"internalType":"uint256","name":"amountOutMin","type":"uint256"},{"internalType":"uint16","name":"dstChainId","type":"uint16"},{"internalType":"address","name":"to","type":"address"},{"internalType":"address payable","name":"refundAddress","type":"address"},{"internalType":"address","name":"zroPaymentAddress","type":"address"},{"internalType":"bytes","name":"adapterParams","type":"bytes"}],"name":"swapAndBridge","outputs":[],"stateMutability":"payable","type":"function"},{"inputs":[],"name":"swapRouter","outputs":[{"internalType":"contract ISwapRouter","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"weth","outputs":[{"internalType":"contract IWETH","name":"","type":"address"}],"stateMutability":"view","type":"function"}]'
+ABI = '[{"inputs":[{"internalType":"address","name":"_oft","type":"address"},{"internalType":"address","name":"_nativeOft","type":"address"},{"internalType":"address","name":"_uniswapRouter","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"inputs":[{"internalType":"uint256","name":"amountIn","type":"uint256"},{"internalType":"uint16","name":"dstChainId","type":"uint16"},{"internalType":"address","name":"to","type":"address"},{"internalType":"address payable","name":"refundAddress","type":"address"},{"internalType":"address","name":"zroPaymentAddress","type":"address"},{"internalType":"bytes","name":"adapterParams","type":"bytes"}],"name":"bridge","outputs":[],"stateMutability":"payable","type":"function"},{"inputs":[],"name":"nativeOft","outputs":[{"internalType":"contract INativeOFT","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"oft","outputs":[{"internalType":"contract IOFTCore","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"amountIn","type":"uint256"},{"internalType":"uint256","name":"amountOutMin","type":"uint256"},{"internalType":"uint16","name":"dstChainId","type":"uint16"},{"internalType":"address","name":"to","type":"address"},{"internalType":"address payable","name":"refundAddress","type":"address"},{"internalType":"address","name":"zroPaymentAddress","type":"address"},{"internalType":"bytes","name":"adapterParams","type":"bytes"}],"name":"swapAndBridge","outputs":[],"stateMutability":"payable","type":"function"},{"inputs":[],"name":"uniswapRouter","outputs":[{"internalType":"contract IUniswapV2Router02","name":"","type":"address"}],"stateMutability":"view","type":"function"}]'
 contract_address = '0x0A9f824C05A74F577A536A8A0c673183a872Dff4'
+zroPaymentAddress = '0x0000000000000000000000000000000000000000'
+
 # private key
-caller = ''
 
 
 def check_balance(address, chain_number):
@@ -24,27 +26,41 @@ def check_balance(address, chain_number):
 
 
 if __name__ == '__main__':
-
-
     web3 = Web3(Web3.HTTPProvider('https://goerli.blockpi.network/v1/rpc/public'))
-    checksum_address = web3.to_checksum_address(config.key)
-
     # web3 = Web3(Web3.HTTPProvider('https://optimism-goerli.public.blastapi.io'))
-    contract_instance = web3.eth.contract(address=contract_address, abi=ABI)
-    check_balance(checksum_address, 1)
-    check_balance(checksum_address, 2)
-    check_balance(checksum_address, 3)
 
     # Call your function
-    address = web3.eth.account.from_key(caller).address
-    eth_account = web3.eth.account.from_key(caller)
+    address = web3.eth.account.from_key(config.key).address
+    eth_account = web3.eth.account.from_key(config.key)
 
-    amountIn = web3.to_wei(Decimal('0.1'), 'ether')
-    amountOutMin = web3.to_wei(Decimal('0.001'), 'ether')
-    dstChainId = ctypes.c_uint16(420).value
+    contract_instance = web3.eth.contract(address=contract_address, abi=ABI)
+    check_balance(address, 1)
+    check_balance(address, 2)
+    check_balance(address, 3)
+
+    tx = {
+        "from": address,
+        "value": web3.to_wei(Decimal('1'), 'ether'),
+        "nonce": web3.eth.get_transaction_count(address),
+        "chainId": 5,
+        "gasPrice": int(web3.eth.gas_price * 1.1)
+    }
+    try:
+        tx['gas'] = web3.eth.estimate_gas(tx)
+    except:
+        print('e')
+
+    amountIn = web3.to_wei(Decimal('1'), 'ether')
+    amountOutMin = web3.to_wei(Decimal('0.01'), 'ether')
+    dstChainId = ctypes.c_uint16(110).value
     adapterParams = bytes('20000', 'utf-8')
-    call_function = contract_instance.functions.swapAndBridge(amountIn, amountOutMin, dstChainId, checksum_address, checksum_address, checksum_address, adapterParams).build_transaction(
-         {"chainId": 5, "from": checksum_address, "nonce": 5, "gasLimit":  web3.eth.gas_price, "value": web3.to_wei(Decimal('0.1'), 'ether'), "timeout": 600})
+    print(amountIn)
+    print(amountOutMin)
+    # call_function = contract_instance.functions.swapAndBridge(amountIn, amountIn, dstChainId, address, address, zroPaymentAddress, b'').build_transaction(tx)
+    call_function = contract_instance.functions.bridge(amountIn, dstChainId, address, address, zroPaymentAddress, b'').build_transaction(tx)
+
+         # {"chainId": 5, "from": address, "nonce": 5, "gasLimit":  web3.eth.gas_price, "value": web3.to_wei(Decimal('0.01'), 'ether'), "timeout": 600})
+
 
     # Sign transaction
     signed_tx = web3.eth.account.sign_transaction(call_function, private_key=config.key)
